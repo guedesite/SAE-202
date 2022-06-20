@@ -9,7 +9,9 @@ import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.RenderingHints;
 import java.awt.Stroke;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
@@ -26,9 +28,9 @@ public class GraphPanel extends JPanel {
     private static final Stroke GRAPH_STROKE = new BasicStroke(2f);
     private int pointWidth = 4;
     private int numberYDivisions = 10;
-    public List<Double> scores;
+    public List<DoubleTime> scores;
 
-    public GraphPanel(List<Double> scores) {
+    public GraphPanel(List<DoubleTime> scores) {
         this.scores = scores;
     }
 
@@ -44,7 +46,7 @@ public class GraphPanel extends JPanel {
         List<Point> graphPoints = new ArrayList<>();
         for (int i = 0; i < scores.size(); i++) {
             int x1 = (int) (i * xScale + padding + labelPadding);
-            int y1 = (int) ((getMaxScore() - scores.get(i)) * yScale + padding);
+            int y1 = (int) ((getMaxScore() - scores.get(i).value) * yScale + padding);
             graphPoints.add(new Point(x1, y1));
         }
 
@@ -82,7 +84,7 @@ public class GraphPanel extends JPanel {
                     g2.setColor(gridColor);
                     g2.drawLine(x0, getHeight() - padding - labelPadding - 1 - pointWidth, x1, padding);
                     g2.setColor(Color.BLACK);
-                    String xLabel = i + "";
+                    String xLabel = scores.get(i).date;
                     FontMetrics metrics = g2.getFontMetrics();
                     int labelWidth = metrics.stringWidth(xLabel);
                     g2.drawString(xLabel, x0 - labelWidth / 2, y0 + metrics.getHeight() + 3);
@@ -123,32 +125,26 @@ public class GraphPanel extends JPanel {
 //    }
     private double getMinScore() {
         double minScore = Double.MAX_VALUE;
-        for (Double score : scores) {
-            minScore = Math.min(minScore, score);
+        for (DoubleTime score : scores) {
+            minScore = Math.min(minScore, score.value);
         }
-        return minScore;
+        return minScore-10.0;
     }
 
     private double getMaxScore() {
         double maxScore = Double.MIN_VALUE;
-        for (Double score : scores) {
-            maxScore = Math.max(maxScore, score);
+        for (DoubleTime score : scores) {
+            maxScore = Math.max(maxScore, score.value);
         }
-        return maxScore;
+        return maxScore+10.0;
     }
 
-    public void setScores(List<Double> scores) {
-        this.scores = scores;
-        invalidate();
-        this.repaint();
-    }
-
-    public List<Double> getScores() {
+    public List<DoubleTime> getScores() {
         return scores;
     }
 
     public static GraphPanel createAndShowGui(String title) {
-        List<Double> scores = new ArrayList<>();
+        List<DoubleTime> scores = new ArrayList<>();
 
         GraphPanel mainPanel = new GraphPanel(scores);
         mainPanel.setPreferredSize(new Dimension(800, 600));
@@ -162,11 +158,24 @@ public class GraphPanel extends JPanel {
     }
     
     public void updateValue() {
+    	invalidate();
     	this.repaint();
-    	if(this.scores.size() > 60) {
+    	if(this.scores.size() > 100) {
     		this.scores.remove(0);
     	}
     	
     }
-
+    public static class DoubleTime {
+    	public double value;
+    	public String date;
+    	
+    	public DoubleTime(double value, long time) {
+    		this.value = value;
+    		long yourmilliseconds = System.currentTimeMillis();
+    		SimpleDateFormat sdf = new SimpleDateFormat("mm:s");    
+    		Date resultdate = new Date(yourmilliseconds);
+    		this.date = sdf.format(resultdate);
+    	}
+    }
+    
 }
