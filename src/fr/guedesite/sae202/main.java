@@ -8,6 +8,8 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Scanner;
 
+import fr.guedesite.sae202.GraphPanel.DoubleTime;
+
 
 public class main {
 	
@@ -27,8 +29,8 @@ public class main {
 
 	
 	public main(int port, String ip) {
-		this.graphTemp = GraphPanel.createAndShowGui("Température");
-		this.graphLum = GraphPanel.createAndShowGui("Luminosité");
+		this.graphTemp = GraphPanel.createAndShowGui("TempÃ©rature");
+		this.graphLum = GraphPanel.createAndShowGui("LuminositÃ©");
 		while(true) {
 			try {
 				client = new DatagramSocket();
@@ -47,12 +49,12 @@ public class main {
 									String cmd = received.substring(2,3);
 									if(cmd.equals("T")) {
 										String value = received.substring(3);
-										graphTemp.scores.add((double) Integer.parseInt(value));
+										graphTemp.scores.add(new DoubleTime(Double.parseDouble(value), System.currentTimeMillis()));
 										graphTemp.updateValue();
 										System.out.println("add "+value);
 									} else if(cmd.equals("L")) {
 										String value = received.substring(3);
-										graphLum.scores.add((double) Integer.parseInt(value));
+										graphLum.scores.add(new DoubleTime(Double.parseDouble(value), System.currentTimeMillis()));
 										graphLum.updateValue();
 										System.out.println("add "+value);
 									} else {
