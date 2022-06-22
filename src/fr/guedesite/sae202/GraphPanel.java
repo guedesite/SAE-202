@@ -16,10 +16,17 @@ import java.util.List;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 
+/**
+ * 
+ * @author Hugo Mathieu
+ *
+ * Génère un graphique avec javax
+ */
+
 public class GraphPanel extends JPanel {
 
-    private int width = 800;
-    private int heigth = 400;
+	private static final long serialVersionUID = 0L;
+	
     private int padding = 25;
     private int labelPadding = 25;
     private Color lineColor = new Color(44, 102, 230, 180);
@@ -28,7 +35,7 @@ public class GraphPanel extends JPanel {
     private static final Stroke GRAPH_STROKE = new BasicStroke(2f);
     private int pointWidth = 4;
     private int numberYDivisions = 10;
-    public List<DoubleTime> scores;
+    public List<DoubleTime> scores; // Contient les donnée des capteurs dans le temps
 
     public GraphPanel(List<DoubleTime> scores) {
         this.scores = scores;
@@ -50,12 +57,12 @@ public class GraphPanel extends JPanel {
             graphPoints.add(new Point(x1, y1));
         }
 
-        // draw white background
+        // Déssine le fond en blanc
         g2.setColor(Color.WHITE);
         g2.fillRect(padding + labelPadding, padding, getWidth() - (2 * padding) - labelPadding, getHeight() - 2 * padding - labelPadding);
         g2.setColor(Color.BLACK);
 
-        // create hatch marks and grid lines for y axis.
+     // créer des hachures et des lignes de grille pour l'axe y
         for (int i = 0; i < numberYDivisions + 1; i++) {
             int x0 = padding + labelPadding;
             int x1 = pointWidth + padding + labelPadding;
@@ -73,7 +80,7 @@ public class GraphPanel extends JPanel {
             g2.drawLine(x0, y0, x1, y1);
         }
 
-        // and for x axis
+        // et pour l'axe x
         for (int i = 0; i < scores.size(); i++) {
             if (scores.size() > 1) {
                 int x0 = i * (getWidth() - padding * 2 - labelPadding) / (scores.size() - 1) + padding + labelPadding;
@@ -93,7 +100,7 @@ public class GraphPanel extends JPanel {
             }
         }
 
-        // create x and y axes 
+        // créé les axes x et y
         g2.drawLine(padding + labelPadding, getHeight() - padding - labelPadding, padding + labelPadding, padding);
         g2.drawLine(padding + labelPadding, getHeight() - padding - labelPadding, getWidth() - padding, getHeight() - padding - labelPadding);
 
@@ -123,12 +130,13 @@ public class GraphPanel extends JPanel {
 //    public Dimension getPreferredSize() {
 //        return new Dimension(width, heigth);
 //    }
+    
     private double getMinScore() {
         double minScore = Double.MAX_VALUE;
         for (DoubleTime score : scores) {
             minScore = Math.min(minScore, score.value);
         }
-        return minScore-10.0;
+        return minScore-10.0; // On rajoute une marge de -10 unité
     }
 
     private double getMaxScore() {
@@ -136,7 +144,7 @@ public class GraphPanel extends JPanel {
         for (DoubleTime score : scores) {
             maxScore = Math.max(maxScore, score.value);
         }
-        return maxScore+10.0;
+        return maxScore+10.0; // On rajoute une marge de +10 unité
     }
 
     public List<DoubleTime> getScores() {
@@ -160,19 +168,19 @@ public class GraphPanel extends JPanel {
     public void updateValue() {
     	invalidate();
     	this.repaint();
-    	if(this.scores.size() > 100) {
+    	if(this.scores.size() > 100) { // Si il y a plus de 100 valeurs on enlève la plus ancienne
     		this.scores.remove(0);
     	}
     	
     }
-    public static class DoubleTime {
+    public static class DoubleTime { // Class sockant une valeur d'un capteur associez à un timestamp
     	public double value;
     	public String date;
     	
     	public DoubleTime(double value, long time) {
     		this.value = value;
     		long yourmilliseconds = System.currentTimeMillis();
-    		SimpleDateFormat sdf = new SimpleDateFormat("mm:s");    
+    		SimpleDateFormat sdf = new SimpleDateFormat("mm:s");     // Convertie le timestamp en un format plus conventionnel
     		Date resultdate = new Date(yourmilliseconds);
     		this.date = sdf.format(resultdate);
     	}

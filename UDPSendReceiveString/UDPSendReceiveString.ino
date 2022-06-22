@@ -1,12 +1,28 @@
-#include <Ethernet.h>
-#include <EthernetUdp.h>
+/*
+ *  Dans le cadre de la SAE202
+ * 
+ *  Envois via Udp grâce au shield Ethernet de l'arduino les informations:
+ *  
+ *  _ température (LM35)
+ *  _ luminosité (photorésistance)
+ *  
+ *  Dans le bute de généré un graph sur un hôte distant en Java
+ *  
+ *  L'envois d'information est activé ou non via une télécommande et un capteur infrarouge, une LED RGB IC sert d'avertissement 
+ *  sur l'état du programme.
+ */
+
+#include <Ethernet.h> // Ethernet shield
+#include <EthernetUdp.h> // Upd
 #include <Arduino.h>
-#include <IRremote.hpp>
-#include <FastLED.h>
+
+#include <IRremote.hpp> // Librairie pour le VS1638
+
+#include <FastLED.h> // Librairie pour a led RGB IC WS2812b
+
 #define LED_PIN 3
-#define NUM_LEDS 1
-#define DECODE_NEC 
 #define IR_PIN 7
+
 #define lumPin A0
 #define tempPin A1
 
@@ -18,16 +34,23 @@
 byte mac[] = {
   0x90, 0xA2, 0xDA, 0x10, 0x57, 0xA6
 };
+
 IPAddress ip(10, 33, 109, 120);
 unsigned int localPort = 8211;
+
 char packetBuffer[UDP_TX_PACKET_MAX_SIZE];
+
 boolean is_connected = false;
 boolean is_on = false;
+
 int speed_transmission = 5;
-long last_loop = 0;
-long last_IR = 0;
-long last_update = 0;
-CRGB leds[NUM_LEDS];
+
+long last_loop = 0;      //
+long last_IR = 0;        // Timer permettant de ne pas faire de delay() qui pourrait causer une perte d'information
+long last_update = 0;    //
+
+CRGB leds[1];
+
 EthernetUDP Udp;
 
 
@@ -60,24 +83,24 @@ void setup_IR() {
 }
 
 void setup_LED() {
-  FastLED.addLeds<WS2812, LED_PIN, GRB>(leds, NUM_LEDS);
+  FastLED.addLeds<WS2812, LED_PIN, GRB>(leds, 1);
   colorLed(0, 255, 0, 0);
   Serial.println("Setup LED Done"); 
 }
 
 void setup_TEMP() {
   pinMode(tempPin, INPUT);
-  
+  pinMode(lumPin, INPUT);
   Serial.println("Setup TEMP Done"); 
 }
 
 void setup(){
   Serial.begin(9600);
   delay(1000);
-  setup_UDP();
-  setup_IR();
-  setup_LED();
-  setup_TEMP();
+  setup_UDP(); // Démarre l'Udp
+  setup_IR(); // Démarre le fonctionnement de la LED infrarouge
+  setup_LED(); // Démarre le fonctionnement de la LED RGB IC
+  setup_TEMP(); // Démarre le fonctionnement du capteur de température
 }
 
 
@@ -87,10 +110,11 @@ void colorLed(int id, int red, int green, int blue){
 }
 
 void sendData(String value) {
+  // Convertie une variable de type String en char[] pour l'envoie via Udp
   char char_array[value.length()+1];
   value.toCharArray(char_array, value.length()+1);
 
-   Serial.println(char_array);
+  Serial.println(char_array);
   Udp.beginPacket(Udp.remoteIP(), Udp.remotePort());
   Udp.write(char_array);
   Udp.endPacket();
@@ -98,7 +122,7 @@ void sendData(String value) {
  
 void receiveData() {
   int packetSize = Udp.parsePacket();
-  if (packetSize) {
+  if (packetSize) { // On vérifie si il y a quelques chose à lire
     Serial.print("From ");
     IPAddress remote = Udp.remoteIP();
     for (int i=0; i < 4; i++) {
@@ -118,11 +142,12 @@ void receiveData() {
 }
 
 void IR_Receive() {
+  // Commande code:
   // 144 = on/off
   // 176 = augmenter vitesse transmission
   // 178 = baisser vitesse transmission
   if (IrReceiver.decode()) {
-      if (millis() - 500 > last_IR){
+      if (millis() - 500 > last_IR){ // On évite les doublons avec un delay de 500ms
         last_IR = millis();
         IrReceiver.printIRResultShort(&Serial);
         IrReceiver.resume();  
@@ -179,11 +204,11 @@ void sendInfo(){
 
 void loop() {
   IR_Receive();
-  if (is_on){
+  if (is_on){ // Si le système a été activé avec la télécommande
     receiveData();
   }
-  if (is_connected){
-    if (millis() - 2000 > last_update){
+  if (is_connected){ // Si un échange à été éffectué
+    if (millis() - 2000 > last_update){ // Si aucun update n'a été envoyé depuis 2 seconde, on arrête d'envoyer
       is_connected = false;
     } else {
       sendInfo();
